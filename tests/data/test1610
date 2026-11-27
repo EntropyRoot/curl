@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="US-ASCII"?>
+<testcase>
+<info>
+<keywords>
+HTTP
+HTTP GET
+--retry
+--retry-max-time
+--parallel
+</keywords>
+</info>
+<reply>
+<data1 nocheck="yes">
+HTTP/1.1 200 OK
+Content-Length: 2000
+
+%repeat[1999 x a]%
+</data1>
+<data2 nocheck="yes">
+HTTP/1.1 503 BAD swsbounce
+Content-Length: 21
+
+server not available
+</data2>
+<data3 nocheck="yes">
+HTTP/1.1 200 OK
+Content-Length: 3
+
+ok
+</data3>
+</reply>
+
+<client>
+<server>
+http
+</server>
+<name>
+--parallel --retry-max-time counts from transfer start, not queueing
+</name>
+# The rate limited first transfer keeps the only slot for about two
+# seconds, longer than --retry-max-time for the second transfer
+<command option="no-output">
+--parallel --parallel-max 1 --limit-rate 1000 http://%HOSTIP:%HTTPPORT/%TESTNUMBER0001 -o %LOGDIR/first%TESTNUMBER --next --retry 1 --retry-delay 0.1 --retry-max-time 1 http://%HOSTIP:%HTTPPORT/%TESTNUMBER0002 -o %LOGDIR/out%TESTNUMBER
+</command>
+</client>
+
+<verify>
+<protocol crlf="headers">
+GET /%TESTNUMBER0001 HTTP/1.1
+Host: %HOSTIP:%HTTPPORT
+User-Agent: curl/%VERSION
+Accept: */*
+
+GET /%TESTNUMBER0002 HTTP/1.1
+Host: %HOSTIP:%HTTPPORT
+User-Agent: curl/%VERSION
+Accept: */*
+
+GET /%TESTNUMBER0002 HTTP/1.1
+Host: %HOSTIP:%HTTPPORT
+User-Agent: curl/%VERSION
+Accept: */*
+
+</protocol>
+<file name="%LOGDIR/out%TESTNUMBER">
+ok
+</file>
+</verify>
+</testcase>

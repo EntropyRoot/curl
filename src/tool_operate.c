@@ -1608,6 +1608,9 @@ static CURLcode add_parallel_transfers(CURLM *multi, CURLSH *share,
       continue;
     }
     per->added = TRUE;
+    if(!per->num_retries)
+      /* the retry timer starts with the first attempt, not when queued */
+      per->retrystart = curlx_now();
 
     result = pre_transfer(per);
     if(result)
